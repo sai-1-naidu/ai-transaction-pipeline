@@ -1,0 +1,62 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sai
+      POSTGRES_DB: ai_interview
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: redis_db
+
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: fastapi_api
+
+    depends_on:
+      - postgres
+      - redis
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./uploads:/app/uploads
+
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build: .
+    container_name: celery_worker
+
+    depends_on:
+      - postgres
+      - redis
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./uploads:/app/uploads
+
+    command: celery -A celery_worker worker --pool=solo --loglevel=info
+
+volumes:
+  postgres_data:
