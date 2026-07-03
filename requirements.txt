@@ -10,3 +10,4 @@ celery
 redis
 google-generativeai
 pydantic-settings
+openpyxl
