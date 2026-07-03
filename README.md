@@ -1,19 +1,22 @@
 # AI Transaction Pipeline
 
-An AI-powered transaction processing pipeline built with **FastAPI**, **Celery**, **PostgreSQL**, **Redis**, **Docker**, and **Google Gemini AI**. The application processes CSV/Excel transaction files asynchronously, cleans and validates data, detects anomalies, classifies uncategorized transactions using AI, generates summaries, and provides REST APIs for monitoring jobs and downloading cleaned data.
+An AI-powered transaction processing pipeline built using **FastAPI**, **Celery**, **PostgreSQL**, **Redis**, **Docker**, and **Google Gemini AI**.
+
+The application processes CSV and Excel transaction files asynchronously, cleans and validates data, detects anomalies, classifies uncategorized transactions using AI, generates intelligent summaries, and provides REST APIs for monitoring jobs and downloading cleaned data.
 
 ---
 
-## Features
+# Features
 
-- Upload CSV/Excel transaction files
-- Background processing using Celery
+- Upload CSV and Excel transaction files
+- Asynchronous background processing using Celery
 - PostgreSQL database for persistent storage
-- Redis as Celery broker and backend
+- Redis as Celery broker and result backend
 - Automatic data cleaning
 - Duplicate removal
 - Missing value handling
-- Currency and status normalization
+- Currency normalization
+- Status normalization
 - Date normalization
 - Rule-based anomaly detection
 - AI-powered transaction categorization using Google Gemini
@@ -25,7 +28,7 @@ An AI-powered transaction processing pipeline built with **FastAPI**, **Celery**
 
 ---
 
-## Tech Stack
+# Tech Stack
 
 - Python 3.11
 - FastAPI
@@ -34,15 +37,17 @@ An AI-powered transaction processing pipeline built with **FastAPI**, **Celery**
 - Redis
 - Celery
 - Pandas
+- OpenPyXL
 - Google Gemini API
 - Docker
+- Docker Compose
 - Uvicorn
 
 ---
 
-## Project Structure
+# Project Structure
 
-```
+```text
 ai-transaction-pipeline/
 │
 ├── app/
@@ -58,40 +63,89 @@ ai-transaction-pipeline/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── celery_worker.py
-├── .env
-└── README.md
+├── .env.example
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## Installation
+# High-Level Architecture
 
-### Clone Repository
+```
+                User
+                  │
+                  ▼
+            FastAPI API
+          Upload Transactions
+                  │
+        ┌─────────┴─────────┐
+        ▼                   ▼
+ PostgreSQL             Redis Queue
+ (Jobs DB)                  │
+                             ▼
+                      Celery Worker
+                             │
+         ┌───────────────────┼───────────────────┐
+         ▼                   ▼                   ▼
+   Data Cleaning      Anomaly Detection     Gemini AI
+         └───────────────────┼───────────────────┘
+                             ▼
+                      PostgreSQL Database
+                             │
+                             ▼
+                  Results / Summary APIs
+                             │
+                             ▼
+                           User
+```
+
+---
+
+# Prerequisites
+
+Before running the project, ensure you have:
+
+- Python 3.11+
+- Docker Desktop
+- Docker Compose
+- Google Gemini API Key
+
+---
+
+# Installation
+
+## Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/ai-transaction-pipeline.git
+git clone https://github.com/sai-1-naidu/ai-transaction-pipeline.git
+
 cd ai-transaction-pipeline
 ```
 
-### Create Virtual Environment
+---
 
-```bash
-python -m venv venv
-```
+## Create Virtual Environment
 
 Windows
 
 ```bash
+python -m venv venv
+
 venv\Scripts\activate
 ```
 
 Linux/macOS
 
 ```bash
+python3 -m venv venv
+
 source venv/bin/activate
 ```
 
-### Install Dependencies
+---
+
+## Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -99,19 +153,21 @@ pip install -r requirements.txt
 
 ---
 
-## Environment Variables
+# Environment Variables
 
 Create a `.env` file.
 
 ```env
 DATABASE_URL=postgresql://postgres:sai@postgres:5432/ai_interview
+
 REDIS_URL=redis://redis:6379/0
-GEMINI_API_KEY=YOUR_API_KEY
+
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 ```
 
 ---
 
-## Run with Docker
+# Run Using Docker
 
 ```bash
 docker compose up --build
@@ -131,19 +187,29 @@ http://localhost:8000/docs
 
 ---
 
-## API Endpoints
+# API Endpoints
 
-### Upload Transactions
+## Upload Transactions
 
 ```
 POST /jobs/upload
 ```
 
-Uploads a CSV or Excel transaction file for processing.
+Uploads a CSV or Excel transaction file for background processing.
 
 ---
 
-### Check Job Status
+## List Jobs
+
+```
+GET /jobs
+```
+
+Returns all uploaded jobs.
+
+---
+
+## Job Status
 
 ```
 GET /jobs/{job_id}/status
@@ -151,25 +217,31 @@ GET /jobs/{job_id}/status
 
 Returns
 
-- Current status
-- Raw rows
-- Clean rows
-- Processing timestamps
-- Summary (when completed)
+- Job Status
+- Raw Rows
+- Clean Rows
+- Created Time
+- Completed Time
+- Processing Summary
 
 ---
 
-### Get Processing Results
+## Processing Results
 
 ```
 GET /jobs/{job_id}/results
 ```
 
-Returns processed transactions with anomaly details.
+Returns
+
+- Processed Transactions
+- Categories
+- Anomaly Details
+- AI Classification
 
 ---
 
-### Get Job Summary
+## Job Summary
 
 ```
 GET /jobs/{job_id}/summary
@@ -186,7 +258,7 @@ Returns
 
 ---
 
-### Dashboard
+## Dashboard
 
 ```
 GET /dashboard
@@ -199,7 +271,7 @@ Returns
 
 ---
 
-### Download Cleaned CSV
+## Download Cleaned CSV
 
 ```
 GET /jobs/{job_id}/download
@@ -209,26 +281,31 @@ Downloads the cleaned transaction dataset.
 
 ---
 
-## Processing Pipeline
+# Processing Pipeline
 
-1. Upload CSV/Excel
-2. Create Job
-3. Celery Worker Processes File
-4. Clean Data
-5. Detect Anomalies
-6. AI Categorization
-7. Save Transactions
-8. Generate AI Summary
-9. Save Results
-10. Download Cleaned CSV
+1. User uploads CSV/Excel file
+2. FastAPI creates a Job
+3. Celery task is published to Redis
+4. Celery Worker processes the file
+5. Data Cleaning
+6. Duplicate Removal
+7. Missing Value Handling
+8. Currency & Status Normalization
+9. Date Normalization
+10. Anomaly Detection
+11. AI Transaction Categorization
+12. AI Summary Generation
+13. Store Results in PostgreSQL
+14. User retrieves results via REST APIs
+15. Download cleaned CSV
 
 ---
 
-## AI Features
+# AI Features
 
-### Transaction Categorization
+## Transaction Categorization
 
-Google Gemini classifies uncategorized transactions into categories such as
+Google Gemini automatically classifies uncategorized transactions into categories such as:
 
 - Shopping
 - Food & Dining
@@ -237,52 +314,60 @@ Google Gemini classifies uncategorized transactions into categories such as
 - Travel
 - Cash Withdrawal
 
-### AI Summary
+---
 
-Automatically generates
+## AI Summary
 
-- Risk Level
+Automatically generates:
+
 - Spending Overview
+- Risk Level
 - Merchant Insights
 - Fraud Indicators
+- Financial Narrative
 
-If the Gemini quota is exceeded, the application falls back to a rule-based summary.
+If the Gemini API quota is exceeded, the application automatically falls back to a rule-based summary.
 
 ---
 
-## Sample Dashboard Response
+# Sample Dashboard Response
 
 ```json
 {
-  "total_jobs": 7,
-  "total_anomalies": 4
+    "total_jobs": 7,
+    "total_anomalies": 4
 }
 ```
 
 ---
 
-## Future Improvements
+# Future Improvements
 
 - JWT Authentication
 - Role-Based Access Control
 - React Dashboard
 - Email Notifications
 - Kubernetes Deployment
+- CI/CD using GitHub Actions
 - ML-Based Fraud Detection
-- CI/CD Pipeline using GitHub Actions
+- Prometheus & Grafana Monitoring
 
 ---
 
-## Author
+# Author
 
 **Tungala Lakshmi Venkata Sai**
 
-GitHub: https://github.com/sai-1-naidu
+GitHub
 
-LinkedIn: https://www.linkedin.com/in/tungala-lakshmi-venkata-sai-5038b6307
+https://github.com/sai-1-naidu
+
+LinkedIn
+
+https://www.linkedin.com/in/tungala-lakshmi-venkata-sai-5038b6307
 
 ---
 
-## License
+# License
 
-This project is developed for educational and internship purposes.
+This project was developed for educational purposes and internship assessment.
