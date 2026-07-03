@@ -31,7 +31,7 @@ The application processes CSV and Excel transaction files asynchronously, cleans
 
 The system architecture is shown below.
 
-![AI Transaction Pipeline Architecture](docs/AI_Transaction_Pipeline_Architecture.png)
+![AI Transaction Pipeline Architecture](AI_Transaction_Pipeline_Architecture.png)
 # Tech Stack
 
 - Python 3.11
